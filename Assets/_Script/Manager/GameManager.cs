@@ -1,130 +1,144 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+namespace _Script.Manager
 {
+    public class GameManager : MonoBehaviour
+    {
 
-    // Variables Global Public.
-    public int nbDeadEnemiesNeeded;
-    public static int lvlShip = 0;
+        #region Variables
 
-    public static GameManager instance;
-
-    public AudioSource coin;
-    public GameObject waves, waveManager;
-
-    // Variables Global Privé.
-    private int nbEnemyDead = 0;
-    private static int _coins = 0;
-
-    private UIManager _uimanager;
-
-
-    /*
-    Awake is called before any Start functions.
-    Retourne rien.
-    */
-    void Awake(){
+        [Header("Goals Parameters")]
+        [SerializeField] private int nbDeadEnemiesNeeded;
         
-        // Si une instance est déjà créer alors détruit le gameObject.
-        if(instance != null){
-            Destroy(gameObject);
+        [Header("UI Wave Parameters")]
+        [SerializeField] private GameObject waves;
+        [SerializeField] private GameObject waveManager;
+        
+        [Header("Audios")]
+        [SerializeField] private AudioSource coin;
+        
+        // Ship Parameters
+        private static int _lvlShip;
+        
+        // Goals Parameters
+        private int _nbEnemyDead;
+        
+        // Stats Parameters
+        private static int _coins;
+        
+        // Managers Parameters
+        private UIManager _uiManager;
+        
+        // Instance Parameters
+        private static GameManager _instance;
+
+        #endregion
+
+        #region Properties
+
+        public int Coins => _coins;
+        public static int LvlShip
+        {
+            get => _lvlShip;
+            set => _lvlShip = value;
         }
 
-        instance = this; // Créer une instance du GameManager.
+        public static GameManager Instance => _instance;
 
-    }
+        #endregion
 
+        #region Built-In Methods
 
-    /* 
-    Start is called before the first frame update.
-    Retourne rien.
-    */
-    void Start(){
-
-        _uimanager = UIManager.instance; // Appelle l'instance du UIManager.
-
-        if(gameObject.scene.name == "Level1")
-            ResetCoin();
-
-        _uimanager.UpdateCoinsInfo(_coins);
-
-    }
-
-
-    /*
-    Fonction qui ajoute une pièce au compteur.
-    Retourne rien.
-    */
-    public void AddCoin(){
-
-        coin.Play();
-        _coins++; // Incrémente la valeur de _coins.
-        _uimanager.UpdateCoinsInfo(_coins);
-
-    }
-
-
-    /*
-    Fonction qui enlève un nombre de pièce donné en paramètres.
-    Retourne rien.
-    */
-    public void RemoveCoin(int coinToRemove){
-
-        _coins -= coinToRemove;
-        _uimanager.UpdateCoinsInfo(_coins);
-
-    }
-
-
-    /*
-    Fonction qui retourne le nombre de coins que le player a.
-    Retourne INTEGER.
-    */
-    public int GetCoin(){
-
-        return _coins;
-
-    }
-
-
-    /*
-    Fonction qui reset le nombre de coins.
-    Retourne rien.
-    */
-    public void ResetCoin(){
-
-        _coins = 0;
-        _uimanager.UpdateCoinsInfo(_coins);
-
-    }
-
-
-    /*
-    Fonction qui s'occupe des condition de victoire liés aux nombres d'enemy tués.
-    Retourne rien.
-    */
-    public void addEnemyDeathToCounterAndCheckIfPlayerPass(){
-
-        // Utilisé pour le dernier niveau afin de faire apparaître le boss.
-        if(nbEnemyDead++ >= nbDeadEnemiesNeeded && gameObject.scene.name == "LevelFinal"){
-
-            waves.SetActive(false);
-            waveManager.SetActive(false);
-            GameObject.Find("Boss").GetComponent<Animator>().SetBool("Boss", true);
-
-        }else if(nbEnemyDead++ >= nbDeadEnemiesNeeded && gameObject.scene.name != "LevelFinal"){
-
-            GameObject.Find("LevelManager").GetComponent<LevelManager>().FinishLevel();
-
-        }else{
-
-            nbEnemyDead += 1; // Appellé 3 fois pour aucune raison(?).
-            nbEnemyDead -= 2;
-
+        /**
+         * <summary>
+         * Awake is called before any Start functions.
+         * </summary>
+         */
+        void Awake()
+        {
+            if(_instance) Destroy(this);
+            _instance = this;
         }
 
+
+        /**
+         * <summary>
+         * Start is called before the first frame update.
+         * </summary>
+         */
+        void Start()
+        {
+            _uiManager = UIManager.Instance;
+
+            if(gameObject.scene.name == "Level1")
+                ResetCoin();
+
+            _uiManager.UpdateCoinsInfo(_coins);
+        }
+
+        #endregion
+
+        #region Custom Methods
+
+        /**
+         * <summary>
+         * Function adding coin to the counter.
+         * </summary>
+         */
+        public void AddCoin()
+        {
+            coin.Play();
+            _coins++;
+            _uiManager.UpdateCoinsInfo(_coins);     // UI Implementation.
+        }
+
+
+        /**
+         * <summary>
+         * Function to remove a defined coin number.
+         * </summary>
+         * <param name="coinToRemove">The quantity to remove.</param>
+         */
+        public void RemoveCoin(int coinToRemove)
+        {
+            _coins -= coinToRemove;
+            _uiManager.UpdateCoinsInfo(_coins);     // UI Implementation.
+        }
+
+
+        /**
+         * <summary>
+         * Function to reset the coin counter.
+         * </summary>
+         */
+        private void ResetCoin()
+        {
+            _coins = 0;
+            _uiManager.UpdateCoinsInfo(_coins);
+        }
+
+
+        /**
+         * <summary>
+         * Function to handle the enemies killing count.
+         * </summary>
+         */
+        public void AddEnemyDeathToCounterAndCheckIfPlayerPass()
+        {
+            _nbEnemyDead++;
+            
+            if(_nbEnemyDead >= nbDeadEnemiesNeeded && gameObject.scene.name == "LevelFinal")
+            {
+                waves.SetActive(false);
+                waveManager.SetActive(false);
+                GameObject.Find("Boss").GetComponent<Animator>().SetBool($"Boss", true);
+            }
+            
+            else if(_nbEnemyDead >= nbDeadEnemiesNeeded && gameObject.scene.name != "LevelFinal")
+                GameObject.Find("LevelManager").GetComponent<LevelManager>().FinishLevel();
+        }
+
+        #endregion
+        
     }
-    
 }

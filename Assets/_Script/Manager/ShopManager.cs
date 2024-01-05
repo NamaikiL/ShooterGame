@@ -1,172 +1,205 @@
-using System.Collections;
-using System.Collections.Generic;
+using _Script.CharacterBehavior;
 using UnityEngine;
 
-public class ShopManager : MonoBehaviour
+namespace _Script.Manager
 {
+    public class ShopManager : MonoBehaviour
+    {
 
-    // Variables Global Public.
-    public int rndPowerUp, pricePowerUp = 5, priceHeal = 10;
+        #region Variables
 
-    public AudioSource button, buy;
-    public GameObject shop, ui;
-    public GameObject[] btnsShips;
-    public GameObject[] btnsPowerUps;
-
-    // Variables Global Privé.
-    private bool _isShopOpen = false;
-
-    private GameManager _gameManager;
-
-
-    /*
-    Start is called before the first frame update.
-    Retourne rien.
-    */
-    void Start(){
+        [Header("Power Up Parameters")] 
+        [SerializeField] private int rndPowerUp;
+        [SerializeField] private int pricePowerUp = 5;
+        [SerializeField] private int priceHeal = 10;
         
-        _gameManager = GameManager.instance;
+        [Header("UI Parameters")]
+        [SerializeField] private GameObject shopUi;
+        [SerializeField] private GameObject mainUi;
+        
+        [Header("Shop Buttons")]
+        [SerializeField] private GameObject[] btnShips;
+        [SerializeField] private GameObject[] btnPowerUps;
+        
+        [Header("Audios")]
+        [SerializeField] private AudioSource button;
+        [SerializeField] private AudioSource buy;
+        
+        // Shop Variable.
+        private bool _isShopOpen;
 
-        RandomPowerUp(); // Randomise le power up vendu lorsque le jeu est lancé.
-        ShipUpdate(); // Update le ship vendu dans le shop.
+        // Managers Variables.
+        private GameManager _gameManager;
+        
+        #endregion
 
-    }
+        #region Built-In Methods
 
+        /**
+         * <summary>
+         * Start is called before the first frame update.
+         * </summary>
+         */
+        void Start()
+        {
+            _gameManager = GameManager.Instance;
 
-    /*
-    Fonction pour ouvrir/fermer le shop.
-    Retourne rien.
-    */
-    public void Shop(){
-
-        button.Play();
-        if(!_isShopOpen){
-            shop.SetActive(true);
-            ui.SetActive(false);
-            Time.timeScale = 0;
-            _isShopOpen = true;
+            RandomPowerUp();
+            ShipUpdate();
         }
-        else{
-            shop.SetActive(false);
-            ui.SetActive(true);
-            Time.timeScale = 1;
-            _isShopOpen = false;
+
+        #endregion
+
+        #region Shop Methods
+
+         /**
+          * <summary>
+          * Function to open the shop.
+          * </summary>
+          */
+        public void Shop()
+        {
+            button.Play();
+            
+            if(!_isShopOpen)
+                ShopOpen(true, false, 0f, true);
+            else
+                ShopOpen(false, true, 1f, false);
         }
 
-    }
+
+        /**
+         * <summary>
+         * Function to change the UI for the shop.
+         * </summary>
+         * <param name="shopState">The state of the Shop UI.</param>
+         * <param name="mainUiState">The state of the Main UI.</param>
+         * <param name="timeScale">The TimeScale.</param>
+         * <param name="shopCheck">To check if the shop is active or not.</param>
+         */
+        private void ShopOpen(bool shopState, bool mainUiState, float timeScale, bool shopCheck)
+        {
+            shopUi.SetActive(shopState);
+            mainUi.SetActive(mainUiState);
+            Time.timeScale = timeScale;
+            _isShopOpen = shopCheck;
+        }
 
 
-    /*
-    Fonction pour générer un power up random dans le shop.
-    Retourne rien
-    */
-    public void RandomPowerUp(){
+        /**
+         * <summary>
+         * Function to randomize the power up in the shop.
+         * </summary>
+         */
+        private void RandomPowerUp()
+        {
+            rndPowerUp = Random.Range(0,btnPowerUps.Length);
+            btnPowerUps[rndPowerUp].SetActive(true);
+        }
 
-        rndPowerUp = Random.Range(0,btnsPowerUps.Length);
-        btnsPowerUps[rndPowerUp].SetActive(true);
 
-    }
-
-
-    /*
-    Fonction qui s'occupe de l'achat des powers up dans le shop.
-    Retourne rien.
-    */
-    public void BuyBonus(){
-
-        if(_gameManager.GetCoin() >= pricePowerUp){
+        /**
+         * <summary>
+         * Function to buy in the shop.
+         * </summary>
+         */
+        public void BuyBonus()
+        {
+            if (_gameManager.Coins < pricePowerUp) return;
             buy.Play();
-
-            switch(btnsPowerUps[rndPowerUp].name){
+            PlayerController playerController = GameObject.Find("Player").GetComponent<PlayerController>();
+            PlayerShoot playerShoot = GameObject.Find("Player").GetComponent<PlayerShoot>();
+            
+            switch(btnPowerUps[rndPowerUp].name){
                 case "BtnDamagePlus":
-                    GameObject.Find("Player").GetComponent<PlayerController>().ActivatePowerUp(GameObject.Find("Player").GetComponent<PlayerShoot>().DamagePlus());
-                    btnsPowerUps[rndPowerUp].SetActive(false);
+                    playerController.ActivatePowerUp(playerShoot.DamagePlus());
+                    btnPowerUps[rndPowerUp].SetActive(false);
                     break;
                 case "BtnFireRatePlus":
-                    GameObject.Find("Player").GetComponent<PlayerController>().ActivatePowerUp(GameObject.Find("Player").GetComponent<PlayerShoot>().FireRatePlus());
-                    btnsPowerUps[rndPowerUp].SetActive(false);
+                    playerController.ActivatePowerUp(playerShoot.FireRatePlus());
+                    btnPowerUps[rndPowerUp].SetActive(false);
                     break;
                 case "BtnShieldUp":
-                    GameObject.Find("Player").GetComponent<PlayerController>().ActivatePowerUp(GameObject.Find("Player").GetComponent<PlayerShoot>().ShieldUp());
-                    btnsPowerUps[rndPowerUp].SetActive(false);
+                    playerController.ActivatePowerUp(playerShoot.ShieldUp());
+                    btnPowerUps[rndPowerUp].SetActive(false);
                     break;
             }
 
-            _gameManager.RemoveCoin(pricePowerUp); // Enlève les pièces.
-            RandomPowerUp(); // ReRandomise le power up du shop.
+            _gameManager.RemoveCoin(pricePowerUp);
+            RandomPowerUp();
         }
 
-    }
 
-
-    /*
-    Fonction pour acheter de l'energy dans le shop.
-    Retourne rien.
-    */
-    public void BuyHealth(){
-
-        if(_gameManager.GetCoin() >= priceHeal){
-
-            if(GameObject.Find("Player").GetComponent<HealthController>().GetCurrentHealth() + 10 < GameObject.Find("Player").GetComponent<HealthController>().GetMaxHealth()){
+        /**
+         * <summary>
+         * Function to buy energy in the shop.
+         * </summary>
+         */
+        public void BuyHealth()
+        {
+            if (_gameManager.Coins <= priceHeal) return;
+            HealthController healthController = GameObject.Find("Player").GetComponent<HealthController>();
+            
+            if(healthController.CurrentHealth + 10 < healthController.MaxHealth)
+            {
                 buy.Play();
-                GameObject.Find("Player").GetComponent<HealthController>().Regenerate(10);
+                healthController.Regenerate(10);
                 _gameManager.RemoveCoin(priceHeal);
+            }
+        }
+
+
+        /**
+         * <summary>
+         * Function to update the shop when the player buy a ship.
+         * </summary>
+         */
+        private void ShipUpdate()
+        {
+            switch(GameManager.LvlShip){
+                case 0:
+                    btnShips[0].SetActive(true);
+                    break;
+                case 1:
+                    btnShips[1].SetActive(true);
+                    break;
+            }
+        }
+
+
+        /**
+         * <summary>
+         * Function to buy the ship script.
+         * </summary>
+         */
+        public void BuyShip()
+        {
+            if(GameManager.LvlShip == 0 && _gameManager.Coins >= 50){
+                UpgradeShip();
+                btnShips[GameManager.LvlShip].SetActive(true);
+                _gameManager.RemoveCoin(50);
+            }else if(GameManager.LvlShip == 1 && _gameManager.Coins >= 100){
+                UpgradeShip();
+                _gameManager.RemoveCoin(100);
             }
 
         }
 
-    }
 
-
-    /*
-    Fonction pour actualiser le ship vendu lorsque le Player ouvre le Shop.
-    Retourne rien.
-    */
-    public void ShipUpdate(){
-
-        switch(GameManager.lvlShip){
-            case 0:
-                btnsShips[0].SetActive(true);
-                break;
-            case 1:
-                btnsShips[1].SetActive(true);
-                break;
-            default:
-                break;
-        }
-
-    }
-
-
-    /*
-    Fonction qui s'occupe de l'achat des Ships.
-    Retourne rien.
-    */
-    public void BuyShip(){
-
-        if(GameManager.lvlShip == 0 && _gameManager.GetCoin() >= 50){
-            upgradeShip();
-            btnsShips[GameManager.lvlShip].SetActive(true);
-            _gameManager.RemoveCoin(50);
-        }else if(GameManager.lvlShip == 1 && _gameManager.GetCoin() > 100){
-            upgradeShip();
-            _gameManager.RemoveCoin(100);
-        }
-
-    }
-
-
-    /*
-    Fonction utilisé pour Buy Ship pour les achats du vaisseau.
-    Retourne rien.
-    */
-    void upgradeShip(){
-
+        /**
+         * <summary>
+         * Function for the ship upgrade.
+         * </summary>
+         */
+        private void UpgradeShip()
+        {
             buy.Play();
-            btnsShips[GameManager.lvlShip].SetActive(false);
-            GameManager.lvlShip++;
+            btnShips[GameManager.LvlShip].SetActive(false);
+            GameManager.LvlShip++;
             GameObject.Find("PlayerManager").GetComponent<PlayerManager>().SpawnShip();
+        }
+
+        #endregion
 
     }
-
 }

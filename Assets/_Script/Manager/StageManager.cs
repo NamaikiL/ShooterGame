@@ -1,47 +1,61 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class StageManager : MonoBehaviour
+namespace _Script.Manager
 {
-
-    // Variables Global Public.
-    public Transform nextStageSpawn;
-    
-    public GameObject[] stages;
-
-
-    /*
-    Start is called before the first frame update.
-    Retourne rien.
-    */
-    void Start(){
+    public class StageManager : MonoBehaviour
+    {
         
-        FirstStageSpawn(); // Créer un premier terrain aléatoire.
+        #region Variables
 
-    }
+        [Header("Stage Parameters")]
+        [SerializeField] private Transform nextStageSpawn;
+        [SerializeField] private GameObject[] stages;
+        
+        #endregion
 
+        #region Built-In Methods
 
-    /*
-    Fonction pour faire spawn le premier Stage.
-    Retourne rien.
-    */
-    void FirstStageSpawn(){
-
-        Instantiate(stages[Random.Range(0, stages.Length)], nextStageSpawn.position, Quaternion.identity); // Instancie un Stage random à la position donné.
-
-    }
-
-
-    /*
-    Fonction pour trigger quand un stage doit être détruit.
-    Retourne rien.
-    */
-    void OnTriggerEnter(Collider other){
-
-        if(other.gameObject.layer == LayerMask.NameToLayer("Stage")){
-            Destroy(other.gameObject);
+        /**
+         * <summary>
+         * Start is called before the first frame update.
+         * </summary>
+         */
+        void Start()
+        {
+            FirstStageSpawn();
+        }
+        
+        /**
+         * <summary>
+         * When a GameObject collides with another GameObject, Unity calls OnTriggerEnter.
+         * </summary>
+         * <param name="other">The other Collider involved in this collision.</param>
+         */
+        void OnTriggerEnter(Collider other)
+        {
+            if(other.gameObject.layer == LayerMask.NameToLayer("Stage"))
+                Destroy(other.gameObject);
         }
 
+        #endregion
+
+        #region Stage Generation
+
+        /**
+         * <summary>
+         * Function to spawn the first stage.
+         * </summary>
+         */
+        void FirstStageSpawn()
+        {
+            Instantiate(
+                stages[Random.Range(0, stages.Length)], 
+                nextStageSpawn.position, 
+                Quaternion.identity
+                );
+        }
+
+        #endregion
+        
     }
 }

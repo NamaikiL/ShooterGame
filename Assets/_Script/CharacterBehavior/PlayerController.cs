@@ -1,195 +1,234 @@
 using System.Collections;
-using System.Collections.Generic;
+using _Script.Manager;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class PlayerController : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHandler, IPointerDownHandler, IPointerUpHandler
+namespace _Script.CharacterBehavior
 {
-    
-    // Variables Global Public.
-    public float moveSpeed = 5;
-    public float xMax, zMax;
-    public float dragOffsetZ;
-    public float dragLerpMultiplier;
-    public bool useClamp = true;
+    public class PlayerController : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHandler, IPointerDownHandler, IPointerUpHandler
+    {
 
-    public IEnumerator _currentPowerUp;
+        #region Variables
 
-    // Variable Global Privé.
-    private bool _isDragging = false;
-
-    private Camera _cam;
-    private PointerEventData _lastData;
-    private Vector3 _wantedPos;
-
-    private AudioSource _shield, _health;
-    private GameManager _gameManager;
-    private PlayerInputs _inputs;
-
-
-    /*
-    Start is called before the first frame update.
-    Retourne rien.
-    */
-    void Start(){
-
-        _inputs = GetComponent<PlayerInputs>(); // Appelle le script PlayerInputs de l'objet.
-        _shield = GameObject.Find("Shield").GetComponent<AudioSource>();
-        _health = GameObject.Find("Energy").GetComponent<AudioSource>();
-
-        _gameManager = GameManager.instance; // Appelle l'instance du UIManager.
-        _cam = Camera.main; // Appelle la main camera.
-
-    }
-
-
-    /*
-    Update is called once per frame.
-    Retourne rien.
-    */
-    void Update(){
-
-        Move(); // Appelle la fonction Move() à chaque frame.
-
-        if(_inputs.changeWeapons && GetComponent<PlayerShoot>().bullet && GetComponent<PlayerShoot>().rocket)
-            GetComponent<PlayerShoot>().ChangeWeapon();
+        [Header("Player Movements Parameters")] 
+        [SerializeField] private float moveSpeed = 5f;
+        [SerializeField] private float xMax;
+        [SerializeField] private float zMax;
+        [SerializeField] private float dragOffsetZ;
+        [SerializeField] private float dragLerpMultiplier;
+        [SerializeField] private bool useClamp = true;
         
-    }
+        [Header("Audio")] 
+        [SerializeField] private AudioSource shield;
+        [SerializeField] private AudioSource health;
+        
+        // Power Up Variables.
+        private IEnumerator _currentPowerUp;
 
+        // Click Event Variables.
+        private bool _isDragging;
+        private PointerEventData _lastData;
+        private Vector3 _wantedPos;
 
-    /*
-    Fonction pour les interactions entre le Player et les GameObjects pouvant être trigger.
-    Retourne rien.
-    */
-    void OnTriggerEnter(Collider other){
+        // Components Variables.
+        private Camera _cam;
+        private PlayerInputs _inputs;
+        private PlayerShoot _playerShoot;
+        
+        // Managers Variables.
+        private GameManager _gameManager;
 
-        // Si le trigger toucher a comme nom de layer "Collectables".
-        if(other.gameObject.layer == LayerMask.NameToLayer("Collectables")){
-            // Switch() qui agit selon le tag de l'objet ramassé.
-            switch(other.gameObject.tag){
-                case "Coin":
-                    _gameManager.AddCoin(); // Ajoute un coin au compteur.
-                    Destroy(other.gameObject);
-                    break;
-                case "Damage":
-                    ActivatePowerUp(GetComponent<PlayerShoot>().DamagePlus());
-                    Destroy(other.gameObject);
-                    break;
-                case "FireRate":
-                    ActivatePowerUp(GetComponent<PlayerShoot>().FireRatePlus());
-                    Destroy(other.gameObject);
-                    break;
-                case "Shield":
-                    _shield.Play();
-                    ActivatePowerUp(GetComponent<PlayerShoot>().ShieldUp());
-                    Destroy(other.gameObject);
-                    break;
-                case "Nuke":
-                    GetComponent<PlayerShoot>().Nuke();
-                    Destroy(other.gameObject);
-                    break;
-                case "Heal":
-                    _health.Play();
-                    GetComponent<HealthController>().Regenerate(15);
-                    Destroy(other.gameObject);
-                    break;
-                default:
-                    Debug.Log("Erreur: Il manque un cas pour cet objet.");
-                    break;
-            }
-            
+        #endregion
+
+        #region Built-In Methods
+
+        /**
+         * <summary>
+         * Start is called before the first frame update.
+         * </summary>
+         */
+        void Start()
+        {
+            _inputs = PlayerInputs.Instance;
+            _playerShoot = GetComponent<PlayerShoot>();
+            _gameManager = GameManager.Instance;
+            _cam = Camera.main;
         }
 
-    }
+
+        /**
+         * <summary>
+         * Update is called once per frame.
+         * </summary>
+         */
+        void Update()
+        {
+            Move();
+
+            if(_inputs.ChangeWeapons && _playerShoot.Bullet && _playerShoot.Rocket)
+                _playerShoot.ChangeWeapon();
+        }
 
 
-    /*
-    Fonction pour les déplacements du joueur.
-    Retourne rien.
-    */
-    void Move(){
-        
-        _wantedPos = transform.position; // Applique la position du Player à la variable.
-
-        // Si le joueur utilise la souris/le téléphone portable alors déplace le Player la ou il clique/appuie.
-        if(_lastData != null && _isDragging){
-            RaycastHit hit;
-            
-            if(Physics.Raycast(_cam.ScreenPointToRay(_lastData.position), out hit, 300, 1<<31)){
-                _wantedPos = Vector3.Lerp(transform.position, hit.point + Vector3.forward * dragOffsetZ, Time.deltaTime * dragLerpMultiplier);
+        /**
+         * <summary>
+         * When a GameObject collides with another GameObject, Unity calls OnTriggerEnter. 
+         * </summary>
+         * <param name="other">The other Collider involved in this collision.</param>
+         */
+        void OnTriggerEnter(Collider other)
+        {
+            // Collectible Behavior.
+            if(other.gameObject.layer == LayerMask.NameToLayer("Collectables"))
+            {
+                switch(other.gameObject.tag)
+                {
+                    case "Coin":
+                        _gameManager.AddCoin();
+                        break;
+                    case "Damage":
+                        ActivatePowerUp(_playerShoot.DamagePlus());
+                        break;
+                    case "FireRate":
+                        ActivatePowerUp(_playerShoot.FireRatePlus());
+                        break;
+                    case "Shield":
+                        shield.Play();
+                        ActivatePowerUp(_playerShoot.ShieldUp());
+                        break;
+                    case "Nuke":
+                        _playerShoot.Nuke();
+                        break;
+                    case "Heal":
+                        health.Play();
+                        GetComponent<HealthController>().Regenerate(15);
+                        break;
+                    default:
+                        Debug.LogError("Error: Missing object behavior.");
+                        break;
+                }
+                Destroy(other.gameObject);
             }
         }
-        // Sinon utilise les touches du clavier.
-        else{
-            _wantedPos = transform.position + (Vector3.right * _inputs.horizontal + Vector3.forward * _inputs.vertical).normalized * moveSpeed * Time.deltaTime;
+
+        #endregion
+
+        #region Custom Methods
+
+        /**
+         * <summary>
+         * Function for the player movements.
+         * </summary>
+         */
+        private void Move()
+        {
+            _wantedPos = transform.position;
+            
+            // Movements with mouse inputs.
+            if(_lastData != null && _isDragging)
+            {
+                if(Physics.Raycast(_cam.ScreenPointToRay(_lastData.position), out RaycastHit hit, 300, 1<<31))
+                    _wantedPos = Vector3.Lerp(transform.position, hit.point + Vector3.forward * dragOffsetZ, Time.deltaTime * dragLerpMultiplier);
+            }
+            
+            // Movements with key inputs.
+            else
+                _wantedPos = transform.position + (Vector3.right * _inputs.Horizontal + Vector3.forward * _inputs.Vertical).normalized * (moveSpeed * Time.deltaTime);
+
+            // Border clamp.
+            if(useClamp)
+            {
+                Vector3 cameraPosition = _cam.transform.position;
+                _wantedPos.x = Mathf.Clamp(_wantedPos.x, cameraPosition.x - xMax, cameraPosition.x + xMax);
+                _wantedPos.z = Mathf.Clamp(_wantedPos.z, cameraPosition.z - zMax, cameraPosition.z + zMax);
+            }
+            
+            transform.position = _wantedPos;    // Give player the pos.
         }
-
-        // Si le joueur est sur le bord de l'écran.
-        if(useClamp){
-            _wantedPos.x = Mathf.Clamp(_wantedPos.x, _cam.transform.position.x - xMax, _cam.transform.position.x + xMax);
-            _wantedPos.z = Mathf.Clamp(_wantedPos.z, _cam.transform.position.z - zMax, _cam.transform.position.z + zMax);
-        }
-
-        transform.position = _wantedPos; // Donne les positions au Player.
-
-    }
-
-
-    /*
-    Fonction pour les appliquer les powerups.
-    Retourne rien.
-    */
-    public void ActivatePowerUp(IEnumerator coroutinePowerUp){
-
-        // Si un Powerup est déjà actif, alors on l'enlève.
-        if(_currentPowerUp != null)
-            StopCoroutine(_currentPowerUp);
         
         
-        _currentPowerUp = coroutinePowerUp; // Applique le PowerUp voulu.
-        StartCoroutine(_currentPowerUp);
+        /**
+         * <summary>
+         * Function to give Power Ups.
+         * </summary>
+         * <param name="coroutinePowerUp">The coroutine for the power up.</param>
+         */
+        public void ActivatePowerUp(IEnumerator coroutinePowerUp)
+        {
+            // Check if there's a already a power-up.
+            if(_currentPowerUp != null)
+                StopCoroutine(_currentPowerUp);
+            
+            _currentPowerUp = coroutinePowerUp;
+            StartCoroutine(_currentPowerUp);
+        }
+
+        #endregion
+
+        #region Drag Events
+
+        /**
+         * <summary>
+         * Called by a BaseInputModule before a drag is started.
+         * </summary>
+         * <param name="eventData">Current event data.</param>
+         */
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            _lastData = eventData;
+        }
+
+
+        /**
+         * <summary>
+         * Called by a BaseInputModule when a drag is ended.
+         * </summary>
+         * <param name="eventData">Current event data.</param>
+         */
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            _lastData = eventData;
+        }
+
+
+        /**
+         * <summary>
+         * Called by the EventSystem every time the pointer is moved during dragging.
+         * </summary>
+         * <param name="eventData">Current event data.</param>
+         */
+        public void OnDrag(PointerEventData eventData)
+        {
+            _lastData = eventData;
+        }
+
+
+        /**
+         * <summary>
+         * Evaluate current state and transition to pressed state.
+         * </summary>
+         * <param name="eventData">The EventData usually sent by the EventSystem.</param>
+         */
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            _lastData = eventData;
+            _isDragging = true;
+        }
+
+
+        /**
+         * <summary>
+         * Evaluate eventData and transition to appropriate state.
+         * </summary>
+         * <param name="eventData">The EventData usually sent by the EventSystem.</param>
+         */
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            _lastData = eventData;
+            _isDragging = false;
+        }
+
+        #endregion
 
     }
-
-
-    // Drag/Déplacement tactile.
-
-
-    // Liste de Fonction Drag() pour permettre au Player de se déplacer à l'aide du clique de la souris ou sur écran de Téléphone.
-    public void OnBeginDrag(PointerEventData eventData){
-
-        _lastData = eventData;
-
-    }
-
-
-    public void OnEndDrag(PointerEventData eventData){
-
-        _lastData = eventData;
-
-    }
-
-
-    public void OnDrag(PointerEventData eventData){
-
-        _lastData = eventData;
-
-    }
-
-
-    public void OnPointerDown(PointerEventData eventData){
-
-        _lastData = eventData;
-        _isDragging = true;
-
-    }
-
-
-    public void OnPointerUp(PointerEventData eventData){
-
-        _lastData = eventData;
-        _isDragging = false;
-
-    }
-
 }

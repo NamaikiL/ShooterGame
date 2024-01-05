@@ -1,47 +1,72 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyController : MonoBehaviour
+namespace _Script.CharacterBehavior
 {
+    public class EnemyController : MonoBehaviour
+    {
+        #region Variables
 
-    // Variables Global Public.
-    public float moveSpeed = 100f;
+        [Header("Enemy Parameters")]
+        [SerializeField] private float moveSpeed = 100f;
+        [SerializeField] private Vector3 destination;
 
-    public Vector3 destination; // Valeur donné à l'aide du script WaveManager.
+        #endregion
 
+        #region Properties
 
-    /*
-    Start is called before the first frame update.
-    Retourne rien.
-    */
-    void Start(){
-        
-        StartCoroutine(GoToDestination());
-
-    }
-
-
-    /*
-    Fonction de déplacement des enemies.
-    Retourne rien.
-    */
-    IEnumerator GoToDestination(){
-        
-        while(true){
-            if(GameObject.Find("Player")) // Debug.
-                transform.LookAt(GameObject.Find("Player").transform.position, Vector3.up); // L'enemy regarde le Player.
-
-            transform.position = Vector3.MoveTowards(transform.position, destination, Time.deltaTime * moveSpeed); // Changement du transform.Translate() par un Vector3.MoveTowards() dû à un bug ou les enemy n'allaient pas à la destination donné(?).
-
-            // Si la distance caculé entre l'enemy et sa destination à un espace inférieur à 0.5 alors l'enemy est détruit.
-            if(Vector3.Distance(transform.position, destination) < 0.5f){
-                Destroy(gameObject);
-            }
-            
-            yield return new WaitForEndOfFrame();
+        public Vector3 Destination
+        {
+            set => destination = value;
         }
 
-    }
+        #endregion
 
+        #region Built-In Methods
+
+        /**
+         * <summary>
+         * Start is called before the first frame update.
+         * </summary>
+         */
+        void Start()
+        {
+            StartCoroutine(GoToDestination());
+        }
+
+        #endregion
+
+        #region Enemy Behavior
+
+        /**
+         * <summary>
+         * Function for the enemy movements.
+         * </summary>
+         */
+        private IEnumerator GoToDestination()
+        {
+            while(true)
+            {
+                if(GameObject.Find("Player"))
+                    transform.LookAt(GameObject.Find("Player").transform.position, Vector3.up); // The enemy look at the player.
+
+                transform.position = Vector3.MoveTowards(
+                    transform.position, 
+                    destination, 
+                    Time.deltaTime * moveSpeed
+                    );
+
+                // If the distance between the enemy and the destination is inferior of .5f, destroy the enemy.
+                if(Vector3.Distance(transform.position, destination) < 0.5f)
+                {
+                    Destroy(gameObject);
+                }
+                yield return new WaitForEndOfFrame();
+            }
+        }
+
+        #endregion
+
+
+    }
 }

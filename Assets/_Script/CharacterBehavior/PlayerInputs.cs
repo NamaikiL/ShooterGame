@@ -1,24 +1,58 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerInputs : MonoBehaviour
+namespace _Script.CharacterBehavior
 {
+    public class PlayerInputs : MonoBehaviour
+    {
 
-    // Variables Global Public.
-    public float horizontal, vertical;
-    public bool changeWeapons;
+        #region Variables
+
+        // Inputs Variables.
+        private float _horizontal, _vertical;
+        private bool _changeWeapons;
+        
+        // Instance Variable.
+        private static PlayerInputs _instance;
+
+        #endregion
+
+        #region Properties
+
+        public float Vertical => _vertical;
+        public float Horizontal => _horizontal;
+        public bool ChangeWeapons => _changeWeapons;
+
+        public static PlayerInputs Instance => _instance;
+
+        #endregion
+        
+        #region Built-In Methods
+
+        /**
+         * <summary>
+         * Awake is called when an enabled script instance is being loaded.
+         * </summary>
+         */
+        void Awake()
+        {
+            if(_instance) Destroy(this);
+            _instance = this;
+        }
 
 
-    /*
-    Update is called once per frame.
-    Retourne rien.
-    */
-    void Update(){
+        /**
+         * <summary>
+         * Update is called once per frame.
+         * </summary>
+         */
+        void Update()
+        {
+            _horizontal = Input.GetAxis("Horizontal");
+            _vertical = Input.GetAxis("Vertical");
+            _changeWeapons = Input.GetButtonDown("ChangeWeapons");
+        }
 
-        horizontal = Input.GetAxis("Horizontal");
-        vertical = Input.GetAxis("Vertical");
-        changeWeapons = Input.GetButtonDown("ChangeWeapons");
+        #endregion
         
     }
 }

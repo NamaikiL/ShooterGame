@@ -1,96 +1,83 @@
-using System.Collections;
-using System.Collections.Generic;
+using _Script.CharacterBehavior;
 using UnityEngine;
 
-public class Bullet : MonoBehaviour
+namespace _Script.Stuff
 {
-
-    // Variables Global Public.
-    public int bulletDamages = 0;
-
     public enum BulletType{
         EnemyHit,
         PlayerHit
     }
+    
+    public class Bullet : MonoBehaviour
+    {
 
-    public BulletType bulletType;
+        #region Variables
 
+        [Header("Bullet Parameters")] 
+        [SerializeField] private int bulletDamages;
+        [SerializeField] private BulletType _bulletType;
 
-    /*
-    Start is called before the first frame update.
-    Retourne rien.
-    */
-    void Start(){
+        #endregion
 
-        // Switch permettant à chaque type de balle d'éviter des collision précises.
-        switch(bulletType){
-            case BulletType.PlayerHit:
-                //Physics.IgnoreLayerCollision(6, 3, true); // Vue en classe, mais empêche le OnTriggerEnter de s'activer. || Ne marche pas non plus avec un OnCollisionEnter.
-                //Physics.IgnoreLayerCollision(6, 9, true);
-                break;
-            case BulletType.EnemyHit:
-                //Physics.IgnoreLayerCollision(6, 7, true); // Vue en classe, mais empêche le OnTriggerEnter de s'activer. || Ne marche pas non plus avec un OnCollisionEnter.
-                break;
+        #region Properties
+
+        public int BulletDamages
+        {
+            set => bulletDamages = value;
         }
 
-    }
-
-
-    /*
-    Fonction qui s'occupe des points de dégâts reçu par le Player/Enemy.
-    Retourne rien.
-    */
-    void OnTriggerEnter(Collider other){
-
-        // Si le player se fait toucher par une balle enemy, enlève un nombre de HP définit.
-        if(other.gameObject.layer == LayerMask.NameToLayer("Player") && bulletType == BulletType.PlayerHit){
-            other.gameObject.GetComponent<HealthController>().Hurt(bulletDamages);
-            Destroy(gameObject);
+        public BulletType ActualBulletType
+        {
+            set => _bulletType = value;
         }
 
-        // Si l'enemy se fait toucher par une balle player, enlève un nombre de HP définit.
-        if(other.gameObject.layer == LayerMask.NameToLayer("Enemy") && bulletType == BulletType.EnemyHit){
-            other.gameObject.GetComponent<HealthController>().Hurt(bulletDamages);
-            Destroy(gameObject);
-        }
+        #endregion
 
-        // Si le joueur tire sur le bouclier du Boss, enlève un nombre de HP définit.
-        if(other.gameObject.layer == LayerMask.NameToLayer("Shield") && other.gameObject.tag == "Boss" && bulletType == BulletType.EnemyHit){
-            other.gameObject.GetComponent<HealthController>().Hurt(bulletDamages);
-            Destroy(gameObject);
-        }
+        #region Built-In Methods
         
-        // Si l'Enemy tire sur le bouclier, annule les dégats.
-        if(other.gameObject.layer == LayerMask.NameToLayer("Shield") && other.gameObject.tag == "Player" && bulletType == BulletType.PlayerHit){
-            Destroy(gameObject);
+        /**
+         * <summary>
+         * When a GameObject collides with another GameObject, Unity calls OnTriggerEnter.
+         * </summary>
+         * <param name="other">The other Collider involved in this collision.</param>
+         */
+        void OnTriggerEnter(Collider other)
+        {
+            // Player Behavior.
+            if(other.gameObject.layer == LayerMask.NameToLayer("Player") 
+               && _bulletType == BulletType.PlayerHit)
+            {
+                other.gameObject.GetComponent<HealthController>().Hurt(bulletDamages);
+                Destroy(gameObject);
+            }
+
+            // Enemy Behavior.
+            if(other.gameObject.layer == LayerMask.NameToLayer("Enemy") 
+               && _bulletType == BulletType.EnemyHit)
+            {
+                other.gameObject.GetComponent<HealthController>().Hurt(bulletDamages);
+                Destroy(gameObject);
+            }
+
+            // Boss Behavior(Shield mode).
+            if(other.gameObject.layer == LayerMask.NameToLayer("Shield") 
+               && other.gameObject.CompareTag("Boss") 
+               && _bulletType == BulletType.EnemyHit)
+            {
+                other.gameObject.GetComponent<HealthController>().Hurt(bulletDamages);
+                Destroy(gameObject);
+            }
+        
+            // Player Behavior(Shield mode).
+            if(other.gameObject.layer == LayerMask.NameToLayer("Shield") 
+               && other.gameObject.CompareTag("Player") 
+               && _bulletType == BulletType.PlayerHit)
+            {
+                Destroy(gameObject);
+            }
         }
+
+        #endregion
 
     }
-
-
-    // Test pour le Physics.IgnoreLayerCollision.
-    /*void OnCollisionEnter(Collision other){
-
-        // Si le player se fait toucher par une balle enemy, enlève un nombre de HP définit.
-        if(bulletType == BulletType.PlayerHit){
-            Debug.Log("J'ai hit un Player");
-            other.gameObject.GetComponent<HealthController>().Hurt(bulletDamages);
-            Destroy(gameObject);
-        }
-
-        // Si l'enemy se fait toucher par une balle player, enlève un nombre de HP définit.
-        if(bulletType == BulletType.EnemyHit){
-            Debug.Log("J'ai hit un Enemy");
-            other.gameObject.GetComponent<HealthController>().Hurt(bulletDamages);
-            Destroy(gameObject);
-        }
-
-        // Si l'Enemy tire sur le bouclier, annule les dégats.
-        if(other.gameObject.layer == LayerMask.NameToLayer("Shield") && bulletType == BulletType.PlayerHit){
-            Debug.Log("J'ai hit le bouclier");
-            Destroy(gameObject);
-        }
-
-    }*/
-
 }

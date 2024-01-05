@@ -1,58 +1,70 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class Magnet : MonoBehaviour
+namespace _Script.Stuff
 {
+    public class Magnet : MonoBehaviour
+    {
 
-    // Variables Global Public.
-    public float attractionForce;
-    public float range = 5;
+        #region Variables
 
-    public LayerMask layerToAttract;
+        [Header("Magnet Parameters")]
+        [SerializeField] private float attractionForce;
+        [SerializeField] private float range = 5;
+        [SerializeField] private LayerMask layerToAttract;
 
-    // Variable Global Privé.
-    private Collider[] colsToAttract = new Collider[300];
-
-
-    /*
-    FixedUpdate is called once per fixed frame.
-    Retourne rien.
-    */
-    void FixedUpdate(){
-
-        Attract(); // Appelle la fonction Attract à chaque frame fix.
+        private readonly Collider[] _colsToAttract = new Collider[300];
         
-    }
+        #endregion
 
+        #region Built-In Methods
 
-    /*
-    Fonction permettant d'attirer un GameObject avec un layer choisi en calculant la force d'attraction par la distance.
-    Retourne rien.
-    */
-    void Attract(){
-
-        // Créer une sphere autour du GameObject avec une range donnée, un tableau avec un nombre maximum d'object pouvant être calculé et le layer choisi.
-        Physics.OverlapSphereNonAlloc(transform.position, range, colsToAttract, layerToAttract);
-
-        // Si le tableau n'a aucun objet en vue, alors ne renvoie rien.
-        if(colsToAttract == null) return;
-
-        // Pour toutes les pièces étant dans la zone de magnet, utilise une force d'attraction pour les amener vers le Player.
-        for(int i = 0; i < colsToAttract.Length; i++){
-            if(colsToAttract[i] == null) continue;
-
-            // Si le tag du collectible est une pièce, alors attire l'objet.
-            if(colsToAttract[i].tag == "Coin"){
-                float distance = Vector3.Distance(colsToAttract[i].transform.position, transform.position);
-                distance = Mathf.Clamp(distance, 0, range);
-
-                Vector3 force = ((transform.position - colsToAttract[i].transform.position).normalized * (range - distance) / range) * attractionForce;
-
-                colsToAttract[i].GetComponent<Rigidbody>().AddForce(force);
-            }
-            
+        /**
+         * <summary>
+         * FixedUpdate is called once per fixed frame.
+         * </summary>
+         */
+        void FixedUpdate()
+        {
+            Attract();
         }
 
+        #endregion
+
+        #region Custom Methods
+
+        /**
+         * <summary>
+         * Function that attract objects by defined layer and distance.
+         * </summary>
+         */
+        void Attract(){
+
+            // Getting the objects in the array.
+            Physics.OverlapSphereNonAlloc(transform.position, range, _colsToAttract, layerToAttract);
+
+            // If null, return.
+            if(_colsToAttract == null) return;
+
+            // Only attract coins.
+            foreach (Collider objectsToAttract in _colsToAttract)
+            {
+                if(objectsToAttract == null) continue;
+                
+                if(objectsToAttract.CompareTag("Coin"))
+                {
+                    Vector3 magnetPosition = transform.position;
+                    Vector3 coinPosition = objectsToAttract.transform.position;
+                    float distance = Vector3.Distance(coinPosition, magnetPosition);
+                    distance = Mathf.Clamp(distance, 0, range);
+
+                    Vector3 force = ((magnetPosition - coinPosition).normalized * (range - distance) / range) * attractionForce;
+
+                    objectsToAttract.GetComponent<Rigidbody>().AddForce(force);
+                }
+            }
+        }
+
+        #endregion
+        
     }
 }

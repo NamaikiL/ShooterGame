@@ -1,234 +1,284 @@
+using System;
 using System.Collections;
-using System.Collections.Generic;
+using _Script.Manager;
+using _Script.Stuff;
 using UnityEngine;
 
-public class PlayerShoot : MonoBehaviour
+namespace _Script.CharacterBehavior
 {
-
-    // Variables Global Public.
-    public int damageBullet = 10, damageRocket = 25;
-    public float speedBullet = 50f, fireRateBullet = 0.5f, speedRocket = 100f, fireRateRocket = 5f;
-
-    public Transform[] bulletSpawners, rocketSpawners;
-
-    public GameObject bullet, rocket, shieldPlayer;
-
-    // Variable Global Privé.
-    private int _currentBulletDamage, _currentRocketDamage;
-    private float _currentFireRateBullet, _currentFireRateRocket;
-    private bool weapon = false;
-    private IEnumerator _currentWeapon;
-
-    private AudioSource _shoot, _missile;
-    private UIManager _uimanager;
-    private GameManager _gameManager;
+    public enum WeaponType
+    {
+        Bullet,
+        Rocket
+    }
     
+    public class PlayerShoot : MonoBehaviour
+    {
 
-    /*
-    Start is called before the first frame update.
-    Retourne rien.
-    */
-    void Start(){
+        #region Variables
 
-        // Lie les variables aux scripts demandés.
-        _uimanager = UIManager.instance;
-        _gameManager = GameManager.instance;
-        _shoot = GameObject.Find("Shoot").GetComponent<AudioSource>();
-        _missile = GameObject.Find("MissileSound").GetComponent<AudioSource>();
-
-        // Applique les valeurs donnés par l'utilisateur.
-        _currentFireRateBullet = fireRateBullet;
-        _currentBulletDamage = damageBullet;
-        _currentFireRateRocket = fireRateRocket;
-        _currentRocketDamage = damageRocket;
-
-        // Commence les coroutines des tirs, selon les prefabs donnés.
-        if(bullet){
-            for(int i = 0; i<bulletSpawners.Length; i++){
-                StartCoroutine(ShootBullet(i));
-            }
-        }
+        [Header("Bullet Parameters")] 
+        [SerializeField] private int damageBullet = 10;
+        [SerializeField] private float speedBullet = 50f;
+        [SerializeField] private float fireRateBullet = .5f;
+        [SerializeField] private Transform[] bulletSpawners;
+        [SerializeField] private GameObject bullet;
         
-        if(rocket){
-            for(int i = 0; i<rocketSpawners.Length; i++){
-                StartCoroutine(ShootRocket(i));
-            }
-        }
+        [Header("Rocket Parameters")]
+        [SerializeField] private int damageRocket = 25;
+        [SerializeField] private float speedRocket = 100f;
+        [SerializeField] private float fireRateRocket = 5f;
+        [SerializeField] private Transform[] rocketSpawners;
+        [SerializeField] private GameObject rocket;
+        
+        [Header("Shield Parameters")]
+        [SerializeField] private GameObject shieldPlayer;
+        
+        [Header("Audios")]
+        [SerializeField] private AudioSource shoot;
+        [SerializeField] private AudioSource missile;
 
-    }
+        // Weapons Parameters.
+        private int _currentBulletDamage, _currentRocketDamage;
+        private int _currentWeaponType;
+        private float _currentFireRateBullet, _currentFireRateRocket;
+        private WeaponType _weapon;
 
+        // Managers Variables.
+        private UIManager _uiManager;
 
-    /*
-    Coroutine permettant aux Player de tirer des balles avec des paramètres donnés.
-    Retourne rien.
-    */
-    IEnumerator ShootBullet(int bulletSpawnerID){
+        #endregion
 
-        while(true){
+        #region Properties
 
-            if(!weapon){
+        public GameObject Bullet => bullet;
+        public GameObject Rocket => rocket;
 
-                _shoot.Play();
+        #endregion
 
-                GameObject newBullet = Instantiate(bullet, bulletSpawners[bulletSpawnerID].position, Quaternion.Euler(transform.forward)); // Créer une balle
-
-                // Applique les valeurs donnés dans les variables public du script.
-                newBullet.GetComponent<Rigidbody>().velocity = transform.forward * speedBullet;
-                newBullet.GetComponent<Bullet>().bulletDamages = _currentBulletDamage;
-
-                Destroy(newBullet, 3f); // Détruit le GameObject de la balle après 3 secondes.
-
-                yield return new WaitForSeconds(_currentFireRateBullet); // Tire selon le FireRate donné.
-
-            }
-
-            yield return null;
-
-        }
-
-    }
+        #region Built-In Methods
 
 
-    /*
-    Coroutine permettant aux Player de tirer des missiles avec des paramètres donnés.
-    Retourne rien.
-    */
-    IEnumerator ShootRocket(int rocketSpawnerID){
+        /**
+         * <summary>
+         * Start is called before the first frame update.
+         * </summary>
+         */
+        void Start()
+        {
+            _uiManager = UIManager.Instance;
 
-        while(true){
-
-            if(weapon){
-
-                _missile.Play();
-
-                GameObject newRocket = Instantiate(rocket, rocketSpawners[rocketSpawnerID].position, Quaternion.Euler(transform.forward)); // Créer une missile.
-
-                // Applique les valeurs donnés dans les variables public du script.
-                newRocket.GetComponent<Rigidbody>().velocity = transform.forward * speedRocket;
-                newRocket.GetComponent<Bullet>().bulletDamages = _currentRocketDamage;
-                newRocket.GetComponent<Bullet>().bulletType = Bullet.BulletType.EnemyHit;
-
-                Destroy(newRocket, 3f); // Détruit le GameObject de le missile après 3 secondes.
-
-                yield return new WaitForSeconds(_currentFireRateRocket); // Tire selon le FireRate donné.
-
-            }
-
-            yield return null;
+            // Stock the bullets & rockets stats in variables.
+            _currentFireRateBullet = fireRateBullet;
+            _currentBulletDamage = damageBullet;
+            _currentFireRateRocket = fireRateRocket;
+            _currentRocketDamage = damageRocket;
             
-        }
-
-    }
-
-
-    /*
-    Fonction pour changer le mode de tir du joueur.
-    Retourne rien.
-    */
-    public void ChangeWeapon(){
-
-        if(!weapon) weapon = true;
-        else weapon = false;
-
-    }
-
-
-    // Power-Ups
-
-
-    /*
-    Coroutine qui augmente les dégats à l'aide d'une valeur donné pendant un certains temps.
-    Retourne rien.
-    */
-    public IEnumerator DamagePlus(){
-
-        ResetPowerValues(); // Reset les valeurs pour ne pas stack.
-
-        _currentBulletDamage *= 2;
-        _currentRocketDamage *= 2;
-        for(int i = 30; i >= 0; i--){
-
-            _uimanager.UpdatePowerUpTimeAndImg(i, "DamagePlus");
-            yield return new WaitForSeconds(1f);
-
-        }
-        _currentBulletDamage = damageBullet;
-        _currentRocketDamage = damageRocket;
-
-    }
-
-
-    /*
-    Couroutine pour doubler la cadence de tir pendant un certains temps.
-    Retourne rien.
-    */
-    public IEnumerator FireRatePlus(){
-
-        ResetPowerValues(); // Reset les valeurs pour ne pas stack.
+            if(bullet)
+            {
+                for(int i = 0; i<bulletSpawners.Length; i++)
+                {
+                    StartCoroutine(ShootBullet(i));
+                }
+            }   // If bullet isn't null.
         
-        _currentFireRateBullet /= 2;
-        _currentFireRateRocket /= 2;
-        for(int i = 30; i >= 0; i--){
-
-            _uimanager.UpdatePowerUpTimeAndImg(i, "FireRatePlus");
-            yield return new WaitForSeconds(1f);
-
-        }
-        _currentFireRateBullet = fireRateBullet;
-        _currentFireRateRocket = fireRateRocket;
-
-    }
-
-
-    /*
-    Coroutine pour activer le shield du player pendant un certain temps.
-    Retourne rien.
-    */
-    public IEnumerator ShieldUp(){
-
-        ResetPowerValues(); // Reset les valeurs pour ne pas stack.
-
-        shieldPlayer.SetActive(true);
-        for(int i = 10; i >= 0; i--){
-
-            _uimanager.UpdatePowerUpTimeAndImg(i, "ShieldUp");
-            yield return new WaitForSeconds(1f);
-
-        }
-        shieldPlayer.SetActive(false);
-
-    }
-
-
-    /*
-    Fonction qui détruit tout les enemy(hors boss) sur le terrain.
-    Retourne rien.
-    */
-    public void Nuke(){
-
-        GameObject[] activeEnemies = GameObject.FindGameObjectsWithTag("Enemy"); // Trouve tout les objet qui ont un tag Enemy et créer un tableau(pour ne pas les confondre avec les boss).
-
-        // Appelle la fonction Death à chaque enemy.
-        foreach(GameObject enemy in activeEnemies){
-            StartCoroutine(enemy.GetComponent<HealthController>().Death());
-            _gameManager.addEnemyDeathToCounterAndCheckIfPlayerPass();
+            if(rocket)
+            {
+                for(int i = 0; i<rocketSpawners.Length; i++)
+                {
+                    StartCoroutine(ShootRocket(i));
+                }
+            }   // If rocket isn't null.
         }
 
+        #endregion
+
+        #region Shooting Behavior
+
+        /**
+         * <summary>
+         * Coroutine making the player shoot bullets.
+         * </summary>
+         * <param name="bulletSpawnerID">The spawner id.</param>
+         */
+        private IEnumerator ShootBullet(int bulletSpawnerID)
+        {
+            while(true)
+            {
+                // Weapon Type.
+                if(_weapon == WeaponType.Bullet)
+                {
+                    shoot.Play();
+                    Vector3 playerForward = transform.forward;
+                    
+                    GameObject newBullet = Instantiate(
+                        bullet, 
+                        bulletSpawners[bulletSpawnerID].position, 
+                        Quaternion.Euler(playerForward)
+                        );
+
+                    // Give the bullet its stats
+                    newBullet.GetComponent<Rigidbody>().velocity = playerForward * speedBullet;
+                    newBullet.GetComponent<Bullet>().BulletDamages = _currentBulletDamage;
+
+                    Destroy(newBullet, 3f); // Destroy the bullet after some time.
+
+                    yield return new WaitForSeconds(_currentFireRateBullet);
+                }
+                yield return null;
+            }
+        }
+
+
+        /**
+         * <summary>
+         * Coroutine making the player shoot rockets.
+         * </summary>
+         * <param name="rocketSpawnerID">The id of the spawner.</param>
+         */
+        private IEnumerator ShootRocket(int rocketSpawnerID)
+        {
+            while(true)
+            {
+                // Weapon type.
+                if(_weapon == WeaponType.Rocket)
+                {
+                    missile.Play();
+                    Vector3 playerForward = transform.forward;
+                    
+                    GameObject newRocket = Instantiate(
+                        rocket, 
+                        rocketSpawners[rocketSpawnerID].position, 
+                        Quaternion.Euler(playerForward)
+                        );
+
+                    // Apply rocket stats.
+                    newRocket.GetComponent<Rigidbody>().velocity = playerForward * speedRocket;
+                    newRocket.GetComponent<Bullet>().BulletDamages = _currentRocketDamage;
+                    newRocket.GetComponent<Bullet>().ActualBulletType = BulletType.EnemyHit;
+
+                    Destroy(newRocket, 3f); // Destroy the rocket after some time.
+
+                    yield return new WaitForSeconds(_currentFireRateRocket); // Fire-rate.
+                }
+                yield return null;
+            }
+        }
+
+
+        /**
+         * <summary>
+         * Function to change the type of weapon.
+         * </summary>
+         */
+        public void ChangeWeapon()
+        {
+            _currentWeaponType++;
+
+            if (_currentWeaponType >= Enum.GetValues(typeof(WeaponType)).Length) _currentWeaponType = 0;
+
+            _weapon = (WeaponType)_currentWeaponType;
+        }
+
+        #endregion
+
+        #region Power Ups
+
+        /**
+         * <summary>
+         * Coroutine that add damage to the player for defined time.
+         * </summary>
+         */
+        public IEnumerator DamagePlus()
+        {
+            ResetPowerValues(); // Reset Values.
+
+            _currentBulletDamage *= 2;
+            _currentRocketDamage *= 2;
+            
+            for(int i = 30; i >= 0; i--)
+            {
+                _uiManager.UpdatePowerUpTimeAndImg(i, "DamagePlus");
+                yield return new WaitForSeconds(1f);
+            }
+            
+            _currentBulletDamage = damageBullet;
+            _currentRocketDamage = damageRocket;
+        }
+
+
+        /**
+         * <summary>
+         * Coroutine that add fire-rate to the player for defined time.
+         * </summary>
+         */
+        public IEnumerator FireRatePlus()
+        {
+            ResetPowerValues(); // Reset Values.
+        
+            _currentFireRateBullet /= 2;
+            _currentFireRateRocket /= 2;
+            
+            for(int i = 30; i >= 0; i--)
+            {
+                _uiManager.UpdatePowerUpTimeAndImg(i, "FireRatePlus");
+                yield return new WaitForSeconds(1f);
+            }
+            
+            _currentFireRateBullet = fireRateBullet;
+            _currentFireRateRocket = fireRateRocket;
+        }
+
+
+        /**
+         * <summary>
+         * Coroutine that add shield to the player for defined time.
+         * </summary>
+         */
+        public IEnumerator ShieldUp()
+        {
+            ResetPowerValues(); // Reset Values.
+
+            shieldPlayer.SetActive(true);
+            
+            for(int i = 10; i >= 0; i--)
+            {
+                _uiManager.UpdatePowerUpTimeAndImg(i, "ShieldUp");
+                yield return new WaitForSeconds(1f);
+            }
+            
+            shieldPlayer.SetActive(false);
+        }
+
+
+        /**
+         * <summary>
+         * Function that destroy all enemies on map.
+         * </summary>
+         */
+        public void Nuke()
+        {
+            foreach(GameObject enemy in GameObject.FindGameObjectsWithTag("Enemy"))
+            {
+                StartCoroutine(enemy.GetComponent<HealthController>().Death());
+            }
+        }
+
+
+        /**
+         * <summary>
+         * Function to reset all power-ups values.
+         * </summary>
+         */
+        private void ResetPowerValues(){
+            _currentFireRateBullet = fireRateBullet;
+            _currentFireRateRocket = fireRateRocket;
+            _currentBulletDamage = damageBullet;
+            _currentRocketDamage = damageRocket;
+            shieldPlayer.SetActive(false);
+        }
+
+        #endregion
+        
     }
-
-
-    /*
-    Fonction pour reset les valeurs des power up.
-    Retourne rien.
-    */
-    public void ResetPowerValues(){
-
-        _currentFireRateBullet = fireRateBullet;
-        _currentFireRateRocket = fireRateRocket;
-        _currentBulletDamage = damageBullet;
-        _currentRocketDamage = damageRocket;
-        shieldPlayer.SetActive(false);
-
-    }
-
 }

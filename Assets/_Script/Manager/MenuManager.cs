@@ -1,101 +1,140 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class MenuManager : MonoBehaviour
+namespace _Script.Manager
 {
+    public class MenuManager : MonoBehaviour
+    {
+        
+        #region Variables
 
-    // Variables Global Public.
-    public AudioSource button;
+        [Header("Audio")] 
+        [SerializeField] private AudioSource button;
 
-    // Variables Global Privé.
-    private static string _lastLevel;
+        // Levels Variables.
+        private static string _lastLevel;
+        
+        // Instance Variable.
+        private static MenuManager _instance;
 
+        #endregion
 
-    /*
-    Fonction qui permet de charger les levels.
-    Retourne rien.
-    */
-    public void SceneLevel(){
+        #region Properties
 
-        button.Play();
+        public static MenuManager Instance => _instance;
 
-        _lastLevel = gameObject.scene.name; // Stock l'ancienne scène dans une variable.
+        #endregion
 
-        // Charge le niveau demandé.
-        if(_lastLevel == "Level1"){
-            SceneManager.LoadScene("Level2", LoadSceneMode.Single);
-        }else if(_lastLevel == "Level2"){
-            SceneManager.LoadScene("LevelFinal", LoadSceneMode.Single);
-        }else{
-            SceneManager.LoadScene("Level1", LoadSceneMode.Single);
-            GameManager.lvlShip = 0; // Reset le ship si jamais le niveau chargé est le premier.
+        #region Built-In Methods
+
+        /**
+         * <summary>
+         * Awake is called when an enabled script instance is being loaded.
+         * </summary>
+         */
+        void Awake()
+        {
+            if(_instance) Destroy(this);
+            _instance = this;
         }
+
+        #endregion
+        
+        #region Scene Methods
+
+        /**
+         * <summary>
+         * Function to change the levels.
+         * </summary>
+         */
+        public void SceneLevel()
+        {
+            button.Play();
+
+            _lastLevel = gameObject.scene.name; // Get the scene name.
+
+            switch (_lastLevel)
+            {
+                case "Level1":
+                    SceneManager.LoadScene("Level2", LoadSceneMode.Single);
+                    break;
+                case "Level2":
+                    SceneManager.LoadScene("LevelFinal", LoadSceneMode.Single);
+                    break;
+                default:
+                    SceneManager.LoadScene("Level1", LoadSceneMode.Single);
+                    GameManager.LvlShip = 0; // Reset the ship if load the first scene.
+                    break;
+            }
+        }
+
+
+        /**
+         * <summary>
+         * Function to play the GameOver Scene.
+         * </summary>
+         * <param name="lastLevel">The last level saved.</param>
+         */
+        public void SceneGameOver(string lastLevel)
+        {
+            button.Play();
+            _lastLevel = lastLevel;
+            SceneManager.LoadScene("GameOver", LoadSceneMode.Single);
+        }
+
+
+        /**
+         * <summary>
+         * Function to play the menu scene.
+         * </summary>
+         */
+        public void SceneMenu()
+        {
+            button.Play();
+            _lastLevel = "";
+            SceneManager.LoadScene("Menu", LoadSceneMode.Single);
+        }
+
+
+        /**
+         * <summary>
+         * Function to restart the game to the last level played.
+         * </summary>
+         */
+        public void SceneRestart()
+        {
+            button.Play();
+            SceneManager.LoadScene(_lastLevel, LoadSceneMode.Single);
+        }
+
+
+        /**
+         * <summary>
+         * Function to play the end scene.
+         * </summary>
+         */
+        public void SceneEnd()
+        {
+            button.Play();
+            SceneManager.LoadScene("End", LoadSceneMode.Single);
+        }
+
+
+        /**
+         * <summary>
+         * Function to quit the game.
+         * </summary>
+         */
+        public void Quit()
+        {
+            button.Play();
+            Application.Quit();
+            #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+            #endif
+        }
+
+        #endregion
         
     }
-
-
-    /*
-    Fonction qui charge la scène du GameOver.
-    Retourne rien.
-    */
-    public void SceneGameOver(string lastLevel){
-
-        button.Play();
-        _lastLevel = lastLevel;
-        SceneManager.LoadScene("GameOver", LoadSceneMode.Single);
-
-    }
-
-
-    /*
-    Fonction qui charge la scène du Menu.
-    Retourne rien.
-    */
-    public void SceneMenu(){
-
-        button.Play();
-        _lastLevel = "";
-        SceneManager.LoadScene("Menu", LoadSceneMode.Single);
-
-    }
-
-
-    /*
-    Fonction qui charge le dernier niveau.
-    Retourne rien.
-    */
-    public void SceneRestart(){
-
-        button.Play();
-        SceneManager.LoadScene(_lastLevel, LoadSceneMode.Single);
-
-    }
-
-
-    /*
-    Fonction qui charge la scène de la fin du jeu.
-    Retourne rien.
-    */
-    public void SceneEnd(){
-
-        button.Play();
-        SceneManager.LoadScene("End", LoadSceneMode.Single);
-
-    }
-
-
-    /*
-    Fonction qui quitte le jeu.
-    Retourne rien.
-    */
-    public void Quit(){
-
-        button.Play();
-        Application.Quit();
-        UnityEditor.EditorApplication.isPlaying = false;
-
-    }
-
 }

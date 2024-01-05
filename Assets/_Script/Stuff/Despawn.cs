@@ -1,36 +1,46 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class Despawn : MonoBehaviour
+namespace _Script.Stuff
 {
+    public class Despawn : MonoBehaviour
+    {
 
-    /*
-    Start is called before the first frame update.
-    Retourne rien.
-    */
-    void Start(){
+        #region Built-In Methods
 
-        StartCoroutine(DespawnItem());
-    }
-
-
-    /*
-    Coroutine faisant despawn l'item après 30s.
-    Retourne rien.
-    */
-    IEnumerator DespawnItem(){
-
-        for(int i = 0; i<30; i++){
-            // Commence l'animation de despawn après 20s.
-            if(i==20){
-                GetComponent<Animator>().SetBool("Despawn", true);
-            }
-            yield return new WaitForSeconds(1f);
+        /**
+         * <summary>
+         * Start is called before the first frame update.
+         * </summary>
+         */
+        void Start()
+        {
+            StartCoroutine(DespawnItem());
         }
-        
-        Destroy(gameObject);
 
-    }
+        #endregion
+
+        #region Custom Methods
+
+        /**
+         * <summary>
+         * Coroutine to despawn items after 30s.
+         * </summary>
+         */
+        private IEnumerator DespawnItem()
+        {
+            for(int i = 0; i<30; i++)
+            {
+                if(i==20)
+                    GetComponent<Animator>().SetBool($"Despawn", true);
+                
+                yield return new WaitForSeconds(1f);
+            }
+        
+            Destroy(gameObject);
+        }
+
+        #endregion
     
+    }
 }
