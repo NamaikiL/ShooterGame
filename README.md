@@ -23,11 +23,14 @@
 
 # Assets Used:
  Unity Packages:
+ 
  [Substance 3D for Unity | Unity Package | Adobe Substance 3D](https://assetstore.unity.com/packages/tools/utilities/substance-3d-for-unity-213208)
  
  [Sci-fi GUI skin | Unity Package | 3d.rina](https://assetstore.unity.com/packages/2d/gui/sci-fi-gui-skin-15606)
 
+
  Models:
+ 
  [32MaquisRaider | Model | ELVENCITY](https://www.turbosquid.com/fr/3d-models/3d-32maquisraider-1969780#)
  
  [Baril arc-en-ciel de science-fiction | Model | CGGame](https://www.turbosquid.com/fr/3d-models/3d-scifi-rainbow-barrel-model-1758254)
@@ -38,7 +41,9 @@
  
  [missile 1 | Model | lukass12](https://www.cgtrader.com/free-3d-models/military/rocketry/missile-1)
 
+
  Sounds
+ 
  [Action Cartoon Music | Music | Mattia Cupelli](https://www.youtube.com/watch?v=H84sldKc6aE)
 
  [Kirby and the Rainbow Curse/Paintbrush - Break into! The Junk Factory | Music | Shogo Sakai, Megumi Ohara, Hirokazu Ando](https://www.youtube.com/watch?v=QHA7Zwdz5HQ)
@@ -57,7 +62,9 @@
  
  [Item Pick up (Counter Strike Source) | SFX | Valve](https://www.youtube.com/watch?v=CeKL4sPWFeY)
 
+
  Substances
+ 
  [Abstact Wall | sbsar | Ozan Önen](https://substance3d.adobe.com/community-assets/assets/11e9ef1c2c0b4c758665d486bc06d0050d6d9756)
  
  [Conveyer Belt Scifi | sbsar | Aryan Kulkarni](https://substance3d.adobe.com/community-assets/assets/68565c271f9b22a36482c28e465a449ebdb57993)
